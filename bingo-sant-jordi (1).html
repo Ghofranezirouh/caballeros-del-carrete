@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Caballeros del Carrete - Bingo Photowalk</title>
+    <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --red: #B22222;
+            --red-dark: #8B0000;
+            --pink: #E8A0BF;
+            --pink-light: #F5D5E5;
+            --pink-pale: #FFF0F6;
+            --white: #FFFFFF;
+            --black: #1A1A1A;
+            --gray: #666;
+            --gray-light: #E0E0E0;
+            --gold: #C4A35A;
+            --gold-light: #E8D5A0;
+        }
+
+        body {
+            background: #FEFCF9;
+            color: var(--black);
+            font-family: 'Cinzel', serif;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* ===== Gothic SVG Icons (inline defs) ===== */
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 24px 16px 8px;
+            width: 100%;
+            max-width: 520px;
+            position: relative;
+        }
+
+        .header-crest {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 8px;
+        }
+
+        .title {
+            font-family: 'UnifrakturMaguntia', cursive;
+            font-size: 2rem;
+            font-weight: 400;
+            color: var(--black);
+            line-height: 1.2;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-top: 4px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .player-name {
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
+            color: var(--red);
+            background: var(--pink-pale);
+            padding: 5px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--pink);
+            letter-spacing: 1px;
+        }
+
+        .score-badge {
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            color: var(--gray);
+            background: #F5F5F5;
+            padding: 5px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--gray-light);
+        }
+
+        /* Gothic ornamental divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 520px;
+            padding: 4px 24px;
+            gap: 0;
+        }
+
+        .divider svg {
+            width: 100%;
+            max-width: 320px;
+            height: 24px;
+        }
+
+        /* Bingo Grid */
+        .bingo-container {
+            width: 100%;
+            max-width: 520px;
+            padding: 8px 12px;
+            position: relative;
+        }
+
+        /* Gothic frame around the grid */
+        .grid-frame {
+            position: relative;
+            padding: 12px;
+            border: 2px solid var(--black);
+            border-radius: 4px;
+        }
+
+        /* Corner ornaments on the grid frame */
+        .frame-corner {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+        }
+        .frame-corner-tl { top: -2px; left: -2px; }
+        .frame-corner-tr { top: -2px; right: -2px; transform: scaleX(-1); }
+        .frame-corner-bl { bottom: -2px; left: -2px; transform: scaleY(-1); }
+        .frame-corner-br { bottom: -2px; right: -2px; transform: scale(-1); }
+
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            width: 100%;
+            aspect-ratio: 1;
+        }
+
+        .cell {
+            background: var(--white);
+            border: 1.5px solid var(--gray-light);
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .cell:hover:not(.completed):not(.free) {
+            border-color: var(--pink);
+            background: var(--pink-pale);
+        }
+
+        .cell span {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(0.45rem, 1.9vw, 0.7rem);
+            line-height: 1.2;
+            color: var(--black);
+            z-index: 1;
+            transition: all 0.25s ease;
+        }
+
+        .cell:active:not(.completed):not(.free) {
+            transform: scale(0.95);
+        }
+
+        .cell.completed {
+            background: var(--pink-pale);
+            border-color: var(--red);
+            border-width: 2px;
+        }
+
+        .cell.completed span {
+            color: var(--red-dark);
+            font-weight: 700;
+        }
+
+        /* Gothic cross mark on completed cells */
+        .cell.completed::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            z-index: 2;
+            opacity: 0.7;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 2C20 2 24 10 24 16C24 10 32 6 32 6C32 6 26 12 26 20C26 12 38 8 38 8C32 12 28 18 28 20C34 18 38 20 38 20C38 20 34 22 28 20C28 22 32 28 38 32C38 32 26 28 26 20C26 28 32 34 32 34C32 34 24 30 24 24C24 30 20 38 20 38C20 38 16 30 16 24C16 30 8 34 8 34C8 34 14 28 14 20C14 28 2 32 2 32C8 28 12 22 12 20C6 22 2 20 2 20C2 20 6 18 12 20C12 18 8 12 2 8C2 8 14 12 14 20C14 12 8 6 8 6C8 6 16 10 16 16C16 10 20 2 20 2Z' fill='%23B22222'/%3E%3Ccircle cx='20' cy='20' r='4' fill='%238B0000'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .cell.free {
+            background: var(--pink-pale);
+            border-color: var(--red);
+            border-width: 2px;
+            cursor: default;
+        }
+
+        .cell.free span {
+            color: var(--red);
+            font-family: 'UnifrakturMaguntia', cursive;
+            font-weight: 400;
+            font-size: clamp(0.55rem, 2.2vw, 0.8rem);
+        }
+
+        /* Free cell has a small rose window */
+        .cell.free::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.06;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23B22222' stroke-width='2'/%3E%3Ccircle cx='50' cy='50' r='35' fill='none' stroke='%23B22222' stroke-width='1.5'/%3E%3Cpath d='M50 5 L50 95 M5 50 L95 50 M15 15 L85 85 M85 15 L15 85' stroke='%23B22222' stroke-width='0.8'/%3E%3Ccircle cx='50' cy='50' r='12' fill='none' stroke='%23B22222' stroke-width='1.5'/%3E%3Ccircle cx='50' cy='25' r='8' fill='none' stroke='%23B22222' stroke-width='1'/%3E%3Ccircle cx='50' cy='75' r='8' fill='none' stroke='%23B22222' stroke-width='1'/%3E%3Ccircle cx='25' cy='50' r='8' fill='none' stroke='%23B22222' stroke-width='1'/%3E%3Ccircle cx='75' cy='50' r='8' fill='none' stroke='%23B22222' stroke-width='1'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        /* Winning line highlight */
+        .cell.winning {
+            animation: winPulse 0.8s ease-in-out infinite alternate;
+            border-color: var(--red);
+            border-width: 2.5px;
+            box-shadow: 0 0 12px rgba(178,34,34,0.3);
+        }
+
+        @keyframes winPulse {
+            from { box-shadow: 0 0 6px rgba(178,34,34,0.2); }
+            to { box-shadow: 0 0 18px rgba(178,34,34,0.5); }
+        }
+
+        /* Victory overlay */
+        .victory-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.95);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            animation: fadeIn 0.5s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .victory-overlay.show { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .victory-content {
+            text-align: center;
+            padding: 32px;
+        }
+
+        .victory-crest {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 16px;
+        }
+
+        .victory-content h1 {
+            font-family: 'UnifrakturMaguntia', cursive;
+            font-size: 2.8rem;
+            color: var(--red);
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+
+        .victory-content p {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            color: var(--black);
+            margin-bottom: 28px;
+        }
+
+        .victory-content button {
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
+            padding: 12px 32px;
+            background: var(--red);
+            color: var(--white);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            letter-spacing: 1px;
+        }
+
+        .victory-content button:hover { background: var(--red-dark); }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            top: -10px;
+            z-index: 101;
+            animation: confettiFall linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes confettiFall {
+            to { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Footer actions */
+        .actions {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px 28px;
+            width: 100%;
+            max-width: 520px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            padding: 8px 20px;
+            border: 1.5px solid var(--gray-light);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--white);
+        }
+
+        .btn-reset {
+            color: var(--red);
+            border-color: var(--red);
+        }
+        .btn-reset:hover { background: var(--red); color: var(--white); }
+
+        .btn-shuffle { color: var(--gray); }
+        .btn-shuffle:hover { background: #F5F5F5; border-color: var(--gray); }
+
+        /* Paper grain texture background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background: #FEFCF9;
+            background-image:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.06'/%3E%3C/svg%3E");
+            background-size: 200px 200px;
+        }
+        /* Secondary grain layer for depth */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.03;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(139,69,19,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139,69,19,0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(139,69,19,0.04) 0%, transparent 70%);
+        }
+
+        /* Ensure content is above the pattern */
+        .header, .divider, .bingo-container, .actions, .name-modal, .victory-overlay, .footer-ornament {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== Knight Selection Modal ===== */
+        .name-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.97);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .name-modal.show { display: flex; }
+
+        .name-form {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            text-align: center;
+            max-width: 440px;
+            width: 94%;
+            position: relative;
+        }
+
+        .name-form-frame {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .name-form-content {
+            position: relative;
+            z-index: 1;
+            padding: 60px 36px 36px;
+        }
+
+        .modal-crest {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 12px;
+        }
+
+        .name-form h2 {
+            font-family: 'UnifrakturMaguntia', cursive;
+            color: var(--black);
+            margin-bottom: 4px;
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        .name-form .modal-subtitle {
+            font-family: 'Cinzel', serif;
+            color: var(--gray);
+            margin-bottom: 24px;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .knight-select {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .knight-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 20px 14px;
+            border: 2px solid var(--gray-light);
+            border-radius: 4px;
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            min-width: 130px;
+            position: relative;
+        }
+
+        .knight-btn:hover {
+            border-color: var(--red);
+            background: var(--pink-pale);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(178,34,34,0.1);
+        }
+
+        .knight-btn:active { transform: scale(0.97); }
+
+        .knight-shield {
+            width: 64px;
+            height: 72px;
+        }
+
+        .knight-name {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--black);
+            letter-spacing: 1px;
+        }
+
+        .knight-motto {
+            font-family: 'Cinzel', serif;
+            font-size: 0.55rem;
+            color: var(--gray);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Page corner ornaments - rose vine */
+        .page-corner {
+            position: fixed;
+            width: 140px;
+            height: 140px;
+            z-index: 0;
+            opacity: 0.18;
+            pointer-events: none;
+        }
+        .page-corner svg {
+            width: 100%;
+            height: 100%;
+        }
+        .page-corner-tl { top: 0; left: 0; }
+        .page-corner-tr { top: 0; right: 0; transform: scaleX(-1); }
+        .page-corner-bl { bottom: 0; left: 0; transform: scaleY(-1); }
+        .page-corner-br { bottom: 0; right: 0; transform: scale(-1); }
+
+        @media (min-width: 600px) {
+            .page-corner { width: 180px; height: 180px; }
+        }
+
+        /* Bottom fleur de lis decoration */
+        .footer-ornament {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            justify-content: center;
+            padding: 0 0 16px;
+            opacity: 0.12;
+        }
+        .footer-ornament svg {
+            width: 40px;
+            height: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Page corner ornaments - Rose vine border -->
+<div class="page-corner page-corner-tl">
+    <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" fill="#1A1A1A">
+        <!-- Main vine along top (horizontal) -->
+        <path d="M10 28 Q40 32 70 26 Q100 20 130 28 Q160 36 190 28 Q220 20 250 26 Q270 30 295 28" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <!-- Secondary vine intertwining top -->
+        <path d="M15 34 Q45 22 75 34 Q105 42 135 30 Q165 20 195 34 Q225 42 255 30 Q275 24 295 32" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <!-- Wavy connector vines top -->
+        <path d="M30 28 Q35 20 50 24" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M90 26 Q95 36 110 32" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M150 30 Q155 20 170 24" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M210 26 Q215 36 230 32" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <!-- Rose 1 (top-left area) -->
+        <circle cx="45" cy="18" r="10" fill="#1A1A1A"/>
+        <path d="M45 8 Q52 12 52 18 Q52 24 45 28 Q38 24 38 18 Q38 12 45 8Z" fill="#1A1A1A"/>
+        <path d="M38 12 Q45 10 52 14" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M39 18 Q45 16 51 20" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="45" cy="16" r="3.5" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="45" cy="16" r="1.5" fill="#FEFCF9"/>
+        <!-- Rose 2 -->
+        <circle cx="110" cy="22" r="11" fill="#1A1A1A"/>
+        <path d="M110 11 Q118 16 118 22 Q118 28 110 33 Q102 28 102 22 Q102 16 110 11Z" fill="#1A1A1A"/>
+        <path d="M102 15 Q110 13 118 17" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M103 22 Q110 20 117 24" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="110" cy="20" r="4" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="110" cy="20" r="1.8" fill="#FEFCF9"/>
+        <!-- Rose 3 -->
+        <circle cx="170" cy="18" r="10.5" fill="#1A1A1A"/>
+        <path d="M170 7 Q178 12 178 18 Q178 24 170 29 Q162 24 162 18 Q162 12 170 7Z" fill="#1A1A1A"/>
+        <path d="M162 12 Q170 10 178 14" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M163 19 Q170 17 177 21" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="170" cy="16" r="3.8" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="170" cy="16" r="1.6" fill="#FEFCF9"/>
+        <!-- Rose 4 -->
+        <circle cx="235" cy="22" r="10" fill="#1A1A1A"/>
+        <path d="M235 12 Q242 16 242 22 Q242 28 235 32 Q228 28 228 22 Q228 16 235 12Z" fill="#1A1A1A"/>
+        <path d="M228 15 Q235 13 242 17" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M229 22 Q235 20 241 24" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="235" cy="20" r="3.5" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="235" cy="20" r="1.5" fill="#FEFCF9"/>
+        <!-- Thorns on top vine -->
+        <path d="M60 26 L56 20 L62 24" fill="#1A1A1A"/>
+        <path d="M80 30 L76 24 L82 28" fill="#1A1A1A"/>
+        <path d="M140 28 L136 22 L142 26" fill="#1A1A1A"/>
+        <path d="M200 30 L196 24 L202 28" fill="#1A1A1A"/>
+        <path d="M260 28 L256 22 L262 26" fill="#1A1A1A"/>
+        <!-- Small leaves along top -->
+        <path d="M70 14 Q76 10 80 14 Q76 18 70 14Z" fill="#1A1A1A"/>
+        <path d="M130 36 Q136 32 140 36 Q136 40 130 36Z" fill="#1A1A1A"/>
+        <path d="M195 14 Q201 10 205 14 Q201 18 195 14Z" fill="#1A1A1A"/>
+        <path d="M270 34 Q276 30 280 34 Q276 38 270 34Z" fill="#1A1A1A"/>
+        <!-- Corner turn - vine goes from horizontal to vertical -->
+        <path d="M10 28 Q6 28 6 34 Q6 42 10 50" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M15 34 Q10 36 10 42 Q10 48 14 54" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <!-- Main vine going down (vertical left side) -->
+        <path d="M10 50 Q16 80 8 110 Q4 130 12 160 Q18 185 8 210 Q4 230 10 260 Q14 280 10 295" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <!-- Secondary vine intertwining vertical -->
+        <path d="M14 54 Q6 75 16 100 Q22 120 12 145 Q6 170 16 195 Q22 215 14 240 Q8 260 16 280 Q18 290 14 295" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <!-- Twisting connectors on vertical vine -->
+        <path d="M10 70 Q18 75 14 85" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M8 130 Q16 135 12 145" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M12 190 Q4 195 8 205" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M10 250 Q18 255 14 265" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <!-- Rosebud 1 on vertical vine -->
+        <path d="M18 75 Q22 68 20 62 Q18 58 16 62 Q14 66 18 75Z" fill="#1A1A1A"/>
+        <path d="M20 62 Q24 58 22 54 Q20 52 18 56 Q17 60 20 62Z" fill="#1A1A1A"/>
+        <!-- Rosebud 2 -->
+        <path d="M6 140 Q2 133 4 127 Q6 123 8 127 Q10 131 6 140Z" fill="#1A1A1A"/>
+        <path d="M4 127 Q0 123 2 119 Q4 117 6 121 Q7 125 4 127Z" fill="#1A1A1A"/>
+        <!-- Rosebud 3 -->
+        <path d="M18 205 Q22 198 20 192 Q18 188 16 192 Q14 196 18 205Z" fill="#1A1A1A"/>
+        <path d="M20 192 Q24 188 22 184 Q20 182 18 186 Q17 190 20 192Z" fill="#1A1A1A"/>
+        <!-- Thorns on vertical vine -->
+        <path d="M10 90 L4 86 L8 92" fill="#1A1A1A"/>
+        <path d="M12 110 L18 106 L14 112" fill="#1A1A1A"/>
+        <path d="M8 160 L2 156 L6 162" fill="#1A1A1A"/>
+        <path d="M14 180 L20 176 L16 182" fill="#1A1A1A"/>
+        <path d="M8 230 L2 226 L6 232" fill="#1A1A1A"/>
+        <path d="M12 270 L18 266 L14 272" fill="#1A1A1A"/>
+        <!-- Leaves on vertical vine -->
+        <path d="M20 100 Q28 94 32 100 Q28 106 20 100Z" fill="#1A1A1A"/>
+        <path d="M2 170 Q-6 164 -2 158 Q4 164 2 170Z" fill="#1A1A1A"/>
+        <path d="M20 220 Q28 214 32 220 Q28 226 20 220Z" fill="#1A1A1A"/>
+        <path d="M2 260 Q-6 254 -2 248 Q4 254 2 260Z" fill="#1A1A1A"/>
+        <!-- Bottom curl -->
+        <path d="M10 295 Q6 300 10 305 Q18 310 22 300 Q24 290 18 285 Q12 282 8 288 Q6 292 10 295Z" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M14 295 Q12 298 14 302 Q18 305 20 298" fill="none" stroke="#1A1A1A" stroke-width="2"/>
+    </svg>
+</div>
+<div class="page-corner page-corner-tr">
+    <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" fill="#1A1A1A">
+        <path d="M10 28 Q40 32 70 26 Q100 20 130 28 Q160 36 190 28 Q220 20 250 26 Q270 30 295 28" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M15 34 Q45 22 75 34 Q105 42 135 30 Q165 20 195 34 Q225 42 255 30 Q275 24 295 32" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M30 28 Q35 20 50 24" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M90 26 Q95 36 110 32" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M150 30 Q155 20 170 24" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M210 26 Q215 36 230 32" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <circle cx="45" cy="18" r="10" fill="#1A1A1A"/>
+        <path d="M45 8 Q52 12 52 18 Q52 24 45 28 Q38 24 38 18 Q38 12 45 8Z" fill="#1A1A1A"/>
+        <path d="M38 12 Q45 10 52 14" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M39 18 Q45 16 51 20" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="45" cy="16" r="3.5" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="45" cy="16" r="1.5" fill="#FEFCF9"/>
+        <circle cx="110" cy="22" r="11" fill="#1A1A1A"/>
+        <path d="M110 11 Q118 16 118 22 Q118 28 110 33 Q102 28 102 22 Q102 16 110 11Z" fill="#1A1A1A"/>
+        <path d="M102 15 Q110 13 118 17" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M103 22 Q110 20 117 24" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="110" cy="20" r="4" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="110" cy="20" r="1.8" fill="#FEFCF9"/>
+        <circle cx="170" cy="18" r="10.5" fill="#1A1A1A"/>
+        <path d="M170 7 Q178 12 178 18 Q178 24 170 29 Q162 24 162 18 Q162 12 170 7Z" fill="#1A1A1A"/>
+        <path d="M162 12 Q170 10 178 14" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M163 19 Q170 17 177 21" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="170" cy="16" r="3.8" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="170" cy="16" r="1.6" fill="#FEFCF9"/>
+        <circle cx="235" cy="22" r="10" fill="#1A1A1A"/>
+        <path d="M235 12 Q242 16 242 22 Q242 28 235 32 Q228 28 228 22 Q228 16 235 12Z" fill="#1A1A1A"/>
+        <path d="M228 15 Q235 13 242 17" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M229 22 Q235 20 241 24" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="235" cy="20" r="3.5" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="235" cy="20" r="1.5" fill="#FEFCF9"/>
+        <path d="M60 26 L56 20 L62 24" fill="#1A1A1A"/>
+        <path d="M80 30 L76 24 L82 28" fill="#1A1A1A"/>
+        <path d="M140 28 L136 22 L142 26" fill="#1A1A1A"/>
+        <path d="M200 30 L196 24 L202 28" fill="#1A1A1A"/>
+        <path d="M260 28 L256 22 L262 26" fill="#1A1A1A"/>
+        <path d="M70 14 Q76 10 80 14 Q76 18 70 14Z" fill="#1A1A1A"/>
+        <path d="M130 36 Q136 32 140 36 Q136 40 130 36Z" fill="#1A1A1A"/>
+        <path d="M195 14 Q201 10 205 14 Q201 18 195 14Z" fill="#1A1A1A"/>
+        <path d="M270 34 Q276 30 280 34 Q276 38 270 34Z" fill="#1A1A1A"/>
+        <path d="M10 28 Q6 28 6 34 Q6 42 10 50" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M15 34 Q10 36 10 42 Q10 48 14 54" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M10 50 Q16 80 8 110 Q4 130 12 160 Q18 185 8 210 Q4 230 10 260 Q14 280 10 295" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M14 54 Q6 75 16 100 Q22 120 12 145 Q6 170 16 195 Q22 215 14 240 Q8 260 16 280 Q18 290 14 295" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M10 70 Q18 75 14 85" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M8 130 Q16 135 12 145" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M12 190 Q4 195 8 205" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M10 250 Q18 255 14 265" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M18 75 Q22 68 20 62 Q18 58 16 62 Q14 66 18 75Z" fill="#1A1A1A"/>
+        <path d="M20 62 Q24 58 22 54 Q20 52 18 56 Q17 60 20 62Z" fill="#1A1A1A"/>
+        <path d="M6 140 Q2 133 4 127 Q6 123 8 127 Q10 131 6 140Z" fill="#1A1A1A"/>
+        <path d="M4 127 Q0 123 2 119 Q4 117 6 121 Q7 125 4 127Z" fill="#1A1A1A"/>
+        <path d="M18 205 Q22 198 20 192 Q18 188 16 192 Q14 196 18 205Z" fill="#1A1A1A"/>
+        <path d="M20 192 Q24 188 22 184 Q20 182 18 186 Q17 190 20 192Z" fill="#1A1A1A"/>
+        <path d="M10 90 L4 86 L8 92" fill="#1A1A1A"/>
+        <path d="M12 110 L18 106 L14 112" fill="#1A1A1A"/>
+        <path d="M8 160 L2 156 L6 162" fill="#1A1A1A"/>
+        <path d="M14 180 L20 176 L16 182" fill="#1A1A1A"/>
+        <path d="M8 230 L2 226 L6 232" fill="#1A1A1A"/>
+        <path d="M12 270 L18 266 L14 272" fill="#1A1A1A"/>
+        <path d="M20 100 Q28 94 32 100 Q28 106 20 100Z" fill="#1A1A1A"/>
+        <path d="M2 170 Q-6 164 -2 158 Q4 164 2 170Z" fill="#1A1A1A"/>
+        <path d="M20 220 Q28 214 32 220 Q28 226 20 220Z" fill="#1A1A1A"/>
+        <path d="M2 260 Q-6 254 -2 248 Q4 254 2 260Z" fill="#1A1A1A"/>
+        <path d="M10 295 Q6 300 10 305 Q18 310 22 300 Q24 290 18 285 Q12 282 8 288 Q6 292 10 295Z" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M14 295 Q12 298 14 302 Q18 305 20 298" fill="none" stroke="#1A1A1A" stroke-width="2"/>
+    </svg>
+</div>
+<div class="page-corner page-corner-bl">
+    <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" fill="#1A1A1A">
+        <path d="M10 28 Q40 32 70 26 Q100 20 130 28 Q160 36 190 28 Q220 20 250 26 Q270 30 295 28" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M15 34 Q45 22 75 34 Q105 42 135 30 Q165 20 195 34 Q225 42 255 30 Q275 24 295 32" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M30 28 Q35 20 50 24" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M90 26 Q95 36 110 32" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M150 30 Q155 20 170 24" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M210 26 Q215 36 230 32" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <circle cx="45" cy="18" r="10" fill="#1A1A1A"/>
+        <path d="M45 8 Q52 12 52 18 Q52 24 45 28 Q38 24 38 18 Q38 12 45 8Z" fill="#1A1A1A"/>
+        <path d="M38 12 Q45 10 52 14" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M39 18 Q45 16 51 20" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="45" cy="16" r="3.5" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="45" cy="16" r="1.5" fill="#FEFCF9"/>
+        <circle cx="110" cy="22" r="11" fill="#1A1A1A"/>
+        <path d="M110 11 Q118 16 118 22 Q118 28 110 33 Q102 28 102 22 Q102 16 110 11Z" fill="#1A1A1A"/>
+        <path d="M102 15 Q110 13 118 17" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M103 22 Q110 20 117 24" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="110" cy="20" r="4" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="110" cy="20" r="1.8" fill="#FEFCF9"/>
+        <circle cx="170" cy="18" r="10.5" fill="#1A1A1A"/>
+        <path d="M170 7 Q178 12 178 18 Q178 24 170 29 Q162 24 162 18 Q162 12 170 7Z" fill="#1A1A1A"/>
+        <path d="M162 12 Q170 10 178 14" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M163 19 Q170 17 177 21" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="170" cy="16" r="3.8" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="170" cy="16" r="1.6" fill="#FEFCF9"/>
+        <circle cx="235" cy="22" r="10" fill="#1A1A1A"/>
+        <path d="M235 12 Q242 16 242 22 Q242 28 235 32 Q228 28 228 22 Q228 16 235 12Z" fill="#1A1A1A"/>
+        <path d="M228 15 Q235 13 242 17" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M229 22 Q235 20 241 24" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="235" cy="20" r="3.5" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="235" cy="20" r="1.5" fill="#FEFCF9"/>
+        <path d="M60 26 L56 20 L62 24" fill="#1A1A1A"/>
+        <path d="M80 30 L76 24 L82 28" fill="#1A1A1A"/>
+        <path d="M140 28 L136 22 L142 26" fill="#1A1A1A"/>
+        <path d="M200 30 L196 24 L202 28" fill="#1A1A1A"/>
+        <path d="M260 28 L256 22 L262 26" fill="#1A1A1A"/>
+        <path d="M70 14 Q76 10 80 14 Q76 18 70 14Z" fill="#1A1A1A"/>
+        <path d="M130 36 Q136 32 140 36 Q136 40 130 36Z" fill="#1A1A1A"/>
+        <path d="M195 14 Q201 10 205 14 Q201 18 195 14Z" fill="#1A1A1A"/>
+        <path d="M270 34 Q276 30 280 34 Q276 38 270 34Z" fill="#1A1A1A"/>
+        <path d="M10 28 Q6 28 6 34 Q6 42 10 50" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M15 34 Q10 36 10 42 Q10 48 14 54" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M10 50 Q16 80 8 110 Q4 130 12 160 Q18 185 8 210 Q4 230 10 260 Q14 280 10 295" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M14 54 Q6 75 16 100 Q22 120 12 145 Q6 170 16 195 Q22 215 14 240 Q8 260 16 280 Q18 290 14 295" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M10 70 Q18 75 14 85" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M8 130 Q16 135 12 145" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M12 190 Q4 195 8 205" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M10 250 Q18 255 14 265" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M18 75 Q22 68 20 62 Q18 58 16 62 Q14 66 18 75Z" fill="#1A1A1A"/>
+        <path d="M20 62 Q24 58 22 54 Q20 52 18 56 Q17 60 20 62Z" fill="#1A1A1A"/>
+        <path d="M6 140 Q2 133 4 127 Q6 123 8 127 Q10 131 6 140Z" fill="#1A1A1A"/>
+        <path d="M4 127 Q0 123 2 119 Q4 117 6 121 Q7 125 4 127Z" fill="#1A1A1A"/>
+        <path d="M18 205 Q22 198 20 192 Q18 188 16 192 Q14 196 18 205Z" fill="#1A1A1A"/>
+        <path d="M20 192 Q24 188 22 184 Q20 182 18 186 Q17 190 20 192Z" fill="#1A1A1A"/>
+        <path d="M10 90 L4 86 L8 92" fill="#1A1A1A"/>
+        <path d="M12 110 L18 106 L14 112" fill="#1A1A1A"/>
+        <path d="M8 160 L2 156 L6 162" fill="#1A1A1A"/>
+        <path d="M14 180 L20 176 L16 182" fill="#1A1A1A"/>
+        <path d="M8 230 L2 226 L6 232" fill="#1A1A1A"/>
+        <path d="M12 270 L18 266 L14 272" fill="#1A1A1A"/>
+        <path d="M20 100 Q28 94 32 100 Q28 106 20 100Z" fill="#1A1A1A"/>
+        <path d="M2 170 Q-6 164 -2 158 Q4 164 2 170Z" fill="#1A1A1A"/>
+        <path d="M20 220 Q28 214 32 220 Q28 226 20 220Z" fill="#1A1A1A"/>
+        <path d="M2 260 Q-6 254 -2 248 Q4 254 2 260Z" fill="#1A1A1A"/>
+        <path d="M10 295 Q6 300 10 305 Q18 310 22 300 Q24 290 18 285 Q12 282 8 288 Q6 292 10 295Z" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M14 295 Q12 298 14 302 Q18 305 20 298" fill="none" stroke="#1A1A1A" stroke-width="2"/>
+    </svg>
+</div>
+<div class="page-corner page-corner-br">
+    <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" fill="#1A1A1A">
+        <path d="M10 28 Q40 32 70 26 Q100 20 130 28 Q160 36 190 28 Q220 20 250 26 Q270 30 295 28" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M15 34 Q45 22 75 34 Q105 42 135 30 Q165 20 195 34 Q225 42 255 30 Q275 24 295 32" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M30 28 Q35 20 50 24" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M90 26 Q95 36 110 32" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M150 30 Q155 20 170 24" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M210 26 Q215 36 230 32" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <circle cx="45" cy="18" r="10" fill="#1A1A1A"/>
+        <path d="M45 8 Q52 12 52 18 Q52 24 45 28 Q38 24 38 18 Q38 12 45 8Z" fill="#1A1A1A"/>
+        <path d="M38 12 Q45 10 52 14" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M39 18 Q45 16 51 20" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="45" cy="16" r="3.5" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="45" cy="16" r="1.5" fill="#FEFCF9"/>
+        <circle cx="110" cy="22" r="11" fill="#1A1A1A"/>
+        <path d="M110 11 Q118 16 118 22 Q118 28 110 33 Q102 28 102 22 Q102 16 110 11Z" fill="#1A1A1A"/>
+        <path d="M102 15 Q110 13 118 17" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M103 22 Q110 20 117 24" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="110" cy="20" r="4" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="110" cy="20" r="1.8" fill="#FEFCF9"/>
+        <circle cx="170" cy="18" r="10.5" fill="#1A1A1A"/>
+        <path d="M170 7 Q178 12 178 18 Q178 24 170 29 Q162 24 162 18 Q162 12 170 7Z" fill="#1A1A1A"/>
+        <path d="M162 12 Q170 10 178 14" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M163 19 Q170 17 177 21" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="170" cy="16" r="3.8" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="170" cy="16" r="1.6" fill="#FEFCF9"/>
+        <circle cx="235" cy="22" r="10" fill="#1A1A1A"/>
+        <path d="M235 12 Q242 16 242 22 Q242 28 235 32 Q228 28 228 22 Q228 16 235 12Z" fill="#1A1A1A"/>
+        <path d="M228 15 Q235 13 242 17" fill="none" stroke="#FEFCF9" stroke-width="1.2"/>
+        <path d="M229 22 Q235 20 241 24" fill="none" stroke="#FEFCF9" stroke-width="1"/>
+        <circle cx="235" cy="20" r="3.5" fill="#1A1A1A" stroke="#FEFCF9" stroke-width="0.8"/>
+        <circle cx="235" cy="20" r="1.5" fill="#FEFCF9"/>
+        <path d="M60 26 L56 20 L62 24" fill="#1A1A1A"/>
+        <path d="M80 30 L76 24 L82 28" fill="#1A1A1A"/>
+        <path d="M140 28 L136 22 L142 26" fill="#1A1A1A"/>
+        <path d="M200 30 L196 24 L202 28" fill="#1A1A1A"/>
+        <path d="M260 28 L256 22 L262 26" fill="#1A1A1A"/>
+        <path d="M70 14 Q76 10 80 14 Q76 18 70 14Z" fill="#1A1A1A"/>
+        <path d="M130 36 Q136 32 140 36 Q136 40 130 36Z" fill="#1A1A1A"/>
+        <path d="M195 14 Q201 10 205 14 Q201 18 195 14Z" fill="#1A1A1A"/>
+        <path d="M270 34 Q276 30 280 34 Q276 38 270 34Z" fill="#1A1A1A"/>
+        <path d="M10 28 Q6 28 6 34 Q6 42 10 50" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M15 34 Q10 36 10 42 Q10 48 14 54" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M10 50 Q16 80 8 110 Q4 130 12 160 Q18 185 8 210 Q4 230 10 260 Q14 280 10 295" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+        <path d="M14 54 Q6 75 16 100 Q22 120 12 145 Q6 170 16 195 Q22 215 14 240 Q8 260 16 280 Q18 290 14 295" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M10 70 Q18 75 14 85" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M8 130 Q16 135 12 145" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M12 190 Q4 195 8 205" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M10 250 Q18 255 14 265" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+        <path d="M18 75 Q22 68 20 62 Q18 58 16 62 Q14 66 18 75Z" fill="#1A1A1A"/>
+        <path d="M20 62 Q24 58 22 54 Q20 52 18 56 Q17 60 20 62Z" fill="#1A1A1A"/>
+        <path d="M6 140 Q2 133 4 127 Q6 123 8 127 Q10 131 6 140Z" fill="#1A1A1A"/>
+        <path d="M4 127 Q0 123 2 119 Q4 117 6 121 Q7 125 4 127Z" fill="#1A1A1A"/>
+        <path d="M18 205 Q22 198 20 192 Q18 188 16 192 Q14 196 18 205Z" fill="#1A1A1A"/>
+        <path d="M20 192 Q24 188 22 184 Q20 182 18 186 Q17 190 20 192Z" fill="#1A1A1A"/>
+        <path d="M10 90 L4 86 L8 92" fill="#1A1A1A"/>
+        <path d="M12 110 L18 106 L14 112" fill="#1A1A1A"/>
+        <path d="M8 160 L2 156 L6 162" fill="#1A1A1A"/>
+        <path d="M14 180 L20 176 L16 182" fill="#1A1A1A"/>
+        <path d="M8 230 L2 226 L6 232" fill="#1A1A1A"/>
+        <path d="M12 270 L18 266 L14 272" fill="#1A1A1A"/>
+        <path d="M20 100 Q28 94 32 100 Q28 106 20 100Z" fill="#1A1A1A"/>
+        <path d="M2 170 Q-6 164 -2 158 Q4 164 2 170Z" fill="#1A1A1A"/>
+        <path d="M20 220 Q28 214 32 220 Q28 226 20 220Z" fill="#1A1A1A"/>
+        <path d="M2 260 Q-6 254 -2 248 Q4 254 2 260Z" fill="#1A1A1A"/>
+        <path d="M10 295 Q6 300 10 305 Q18 310 22 300 Q24 290 18 285 Q12 282 8 288 Q6 292 10 295Z" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+        <path d="M14 295 Q12 298 14 302 Q18 305 20 298" fill="none" stroke="#1A1A1A" stroke-width="2"/>
+    </svg>
+</div>
+
+<!-- Knight Selection Modal -->
+<div class="name-modal show" id="nameModal">
+    <div class="name-form">
+        <!-- Ornate Gothic Frame SVG -->
+        <svg class="name-form-frame" viewBox="0 0 440 520" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer border -->
+            <rect x="4" y="4" width="432" height="512" rx="3" fill="#FEFCF9" stroke="#1A1A1A" stroke-width="2.5"/>
+            <!-- Inner border -->
+            <rect x="14" y="14" width="412" height="492" rx="2" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+            <!-- Decorative border pattern - top -->
+            <rect x="18" y="18" width="404" height="484" rx="1" fill="none" stroke="#1A1A1A" stroke-width="0.5" stroke-dasharray="6 3"/>
+
+            <!-- Top cartouche / oval shield -->
+            <ellipse cx="220" cy="42" rx="90" ry="30" fill="#FEFCF9" stroke="#1A1A1A" stroke-width="2"/>
+            <ellipse cx="220" cy="42" rx="78" ry="22" fill="none" stroke="#1A1A1A" stroke-width="0.8"/>
+            <!-- Cartouche scrollwork left -->
+            <path d="M128 42 Q118 30 108 38 Q100 46 110 52 Q118 56 128 48" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+            <path d="M108 38 Q96 32 90 40 Q86 48 96 50" fill="none" stroke="#1A1A1A" stroke-width="1.2"/>
+            <path d="M90 40 Q82 34 76 42 Q74 48 82 50" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+            <!-- Small leaf left -->
+            <path d="M84 36 Q78 28 74 34 Q72 40 78 42" fill="#1A1A1A" opacity="0.15"/>
+            <!-- Cartouche scrollwork right -->
+            <path d="M312 42 Q322 30 332 38 Q340 46 330 52 Q322 56 312 48" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+            <path d="M332 38 Q344 32 350 40 Q354 48 344 50" fill="none" stroke="#1A1A1A" stroke-width="1.2"/>
+            <path d="M350 40 Q358 34 364 42 Q366 48 358 50" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+            <!-- Small leaf right -->
+            <path d="M356 36 Q362 28 366 34 Q368 40 362 42" fill="#1A1A1A" opacity="0.15"/>
+            <!-- Fleur in cartouche center -->
+            <path d="M220 28 Q224 34 220 42 Q216 34 220 28Z" fill="#B22222" opacity="0.6"/>
+            <path d="M212 33 Q216 30 220 35 Q216 40 212 33Z" fill="#B22222" opacity="0.4"/>
+            <path d="M228 33 Q224 30 220 35 Q224 40 228 33Z" fill="#B22222" opacity="0.4"/>
+
+            <!-- Left column with acanthus -->
+            <line x1="30" y1="60" x2="30" y2="460" stroke="#1A1A1A" stroke-width="1.5"/>
+            <line x1="36" y1="65" x2="36" y2="455" stroke="#1A1A1A" stroke-width="0.5"/>
+            <!-- Column capital top-left -->
+            <path d="M24 60 L42 60 L38 68 L28 68 Z" fill="none" stroke="#1A1A1A" stroke-width="1.2"/>
+            <path d="M20 58 L46 58" stroke="#1A1A1A" stroke-width="1"/>
+            <!-- Acanthus leaves left side -->
+            <path d="M30 90 Q18 100 22 112 Q26 120 30 110 Q34 120 38 112 Q42 100 30 90Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.5"/>
+            <path d="M30 140 Q18 150 22 162 Q26 170 30 160 Q34 170 38 162 Q42 150 30 140Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.5"/>
+            <path d="M30 200 Q18 210 22 222 Q26 230 30 220 Q34 230 38 222 Q42 210 30 200Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.4"/>
+            <path d="M30 260 Q18 270 22 282 Q26 290 30 280 Q34 290 38 282 Q42 270 30 260Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.4"/>
+            <path d="M30 320 Q18 330 22 342 Q26 350 30 340 Q34 350 38 342 Q42 330 30 320Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.35"/>
+            <path d="M30 380 Q18 390 22 402 Q26 410 30 400 Q34 410 38 402 Q42 390 30 380Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.35"/>
+            <!-- Column base left -->
+            <path d="M24 460 L42 460 L38 452 L28 452 Z" fill="none" stroke="#1A1A1A" stroke-width="1.2"/>
+            <path d="M20 462 L46 462" stroke="#1A1A1A" stroke-width="1"/>
+
+            <!-- Right column with acanthus -->
+            <line x1="410" y1="60" x2="410" y2="460" stroke="#1A1A1A" stroke-width="1.5"/>
+            <line x1="404" y1="65" x2="404" y2="455" stroke="#1A1A1A" stroke-width="0.5"/>
+            <!-- Column capital top-right -->
+            <path d="M398 60 L416 60 L412 68 L402 68 Z" fill="none" stroke="#1A1A1A" stroke-width="1.2"/>
+            <path d="M394 58 L420 58" stroke="#1A1A1A" stroke-width="1"/>
+            <!-- Acanthus leaves right side -->
+            <path d="M410 90 Q398 100 402 112 Q406 120 410 110 Q414 120 418 112 Q422 100 410 90Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.5"/>
+            <path d="M410 140 Q398 150 402 162 Q406 170 410 160 Q414 170 418 162 Q422 150 410 140Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.5"/>
+            <path d="M410 200 Q398 210 402 222 Q406 230 410 220 Q414 230 418 222 Q422 210 410 200Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.4"/>
+            <path d="M410 260 Q398 270 402 282 Q406 290 410 280 Q414 290 418 282 Q422 270 410 260Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.4"/>
+            <path d="M410 320 Q398 330 402 342 Q406 350 410 340 Q414 350 418 342 Q422 330 410 320Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.35"/>
+            <path d="M410 380 Q398 390 402 402 Q406 410 410 400 Q414 410 418 402 Q422 390 410 380Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.35"/>
+            <!-- Column base right -->
+            <path d="M398 460 L416 460 L412 452 L402 452 Z" fill="none" stroke="#1A1A1A" stroke-width="1.2"/>
+            <path d="M394 462 L420 462" stroke="#1A1A1A" stroke-width="1"/>
+
+            <!-- Bottom panel frame -->
+            <rect x="60" y="468" width="320" height="32" rx="2" fill="none" stroke="#1A1A1A" stroke-width="1.2"/>
+            <rect x="64" y="472" width="312" height="24" rx="1" fill="none" stroke="#1A1A1A" stroke-width="0.5"/>
+            <!-- Bottom scrollwork left -->
+            <path d="M58 484 Q48 478 42 484 Q38 490 46 492 Q52 494 58 488" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+            <path d="M42 484 Q34 480 30 486" fill="none" stroke="#1A1A1A" stroke-width="0.8"/>
+            <!-- Bottom scrollwork right -->
+            <path d="M382 484 Q392 478 398 484 Q402 490 394 492 Q388 494 382 488" fill="none" stroke="#1A1A1A" stroke-width="1"/>
+            <path d="M398 484 Q406 480 410 486" fill="none" stroke="#1A1A1A" stroke-width="0.8"/>
+
+            <!-- Corner ornaments - top left -->
+            <path d="M14 14 Q14 10 20 10 L36 10 Q30 14 30 22 L30 36 Q26 30 18 30 Q10 30 10 24 Q10 18 14 14Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.6"/>
+            <circle cx="18" cy="18" r="3" fill="#B22222" opacity="0.4"/>
+            <!-- Corner ornaments - top right -->
+            <path d="M426 14 Q426 10 420 10 L404 10 Q410 14 410 22 L410 36 Q414 30 422 30 Q430 30 430 24 Q430 18 426 14Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.6"/>
+            <circle cx="422" cy="18" r="3" fill="#B22222" opacity="0.4"/>
+            <!-- Corner ornaments - bottom left -->
+            <path d="M14 506 Q14 510 20 510 L36 510 Q30 506 30 498 L30 484 Q26 490 18 490 Q10 490 10 496 Q10 502 14 506Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.6"/>
+            <circle cx="18" cy="502" r="3" fill="#B22222" opacity="0.4"/>
+            <!-- Corner ornaments - bottom right -->
+            <path d="M426 506 Q426 510 420 510 L404 510 Q410 506 410 498 L410 484 Q414 490 422 490 Q430 490 430 496 Q430 502 426 506Z" fill="none" stroke="#1A1A1A" stroke-width="1" opacity="0.6"/>
+            <circle cx="422" cy="502" r="3" fill="#B22222" opacity="0.4"/>
+
+            <!-- Top decorative border scrollwork -->
+            <path d="M80 14 Q90 6 100 14" fill="none" stroke="#1A1A1A" stroke-width="0.8" opacity="0.4"/>
+            <path d="M120 14 Q130 6 140 14" fill="none" stroke="#1A1A1A" stroke-width="0.8" opacity="0.4"/>
+            <path d="M300 14 Q310 6 320 14" fill="none" stroke="#1A1A1A" stroke-width="0.8" opacity="0.4"/>
+            <path d="M340 14 Q350 6 360 14" fill="none" stroke="#1A1A1A" stroke-width="0.8" opacity="0.4"/>
+            <!-- Bottom decorative border scrollwork -->
+            <path d="M80 506 Q90 514 100 506" fill="none" stroke="#1A1A1A" stroke-width="0.8" opacity="0.4"/>
+            <path d="M120 506 Q130 514 140 506" fill="none" stroke="#1A1A1A" stroke-width="0.8" opacity="0.4"/>
+            <path d="M300 506 Q310 514 320 506" fill="none" stroke="#1A1A1A" stroke-width="0.8" opacity="0.4"/>
+            <path d="M340 506 Q350 514 360 506" fill="none" stroke="#1A1A1A" stroke-width="0.8" opacity="0.4"/>
+
+            <!-- Vine tendrils between acanthus leaves - left -->
+            <path d="M30 122 Q24 128 30 136" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+            <path d="M30 172 Q36 180 30 190" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+            <path d="M30 232 Q24 240 30 250" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+            <path d="M30 292 Q36 300 30 310" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+            <path d="M30 352 Q24 360 30 370" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+            <!-- Vine tendrils - right -->
+            <path d="M410 122 Q416 128 410 136" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+            <path d="M410 172 Q404 180 410 190" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+            <path d="M410 232 Q416 240 410 250" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+            <path d="M410 292 Q404 300 410 310" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+            <path d="M410 352 Q416 360 410 370" fill="none" stroke="#1A1A1A" stroke-width="0.6" opacity="0.3"/>
+
+            <!-- Small flowers on border -->
+            <circle cx="220" cy="10" r="4" fill="none" stroke="#B22222" stroke-width="0.8" opacity="0.4"/>
+            <circle cx="220" cy="10" r="1.5" fill="#B22222" opacity="0.4"/>
+            <circle cx="220" cy="510" r="4" fill="none" stroke="#B22222" stroke-width="0.8" opacity="0.4"/>
+            <circle cx="220" cy="510" r="1.5" fill="#B22222" opacity="0.4"/>
+        </svg>
+
+        <div class="name-form-content">
+        <h2>Caballeros del Carrete</h2>
+        <p class="modal-subtitle">Photowalk de Sant Jordi</p>
+        <div class="knight-select">
+            <button class="knight-btn" onclick="selectKnight('Ghofrane')">
+                <div class="knight-shield">
+                    <svg viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Shield -->
+                        <path d="M40 4 L74 16 L74 52 Q74 82 40 92 Q6 82 6 52 L6 16 Z" fill="#FFF0F6" stroke="#1A1A1A" stroke-width="2"/>
+                        <!-- Diagonal band -->
+                        <path d="M6 32 L60 92 Q74 80 74 52 L74 46 Z" fill="#B22222" opacity="0.15"/>
+                        <!-- Crossed swords -->
+                        <line x1="24" y1="24" x2="56" y2="68" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="56" y1="24" x2="24" y2="68" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+                        <!-- Sword guards -->
+                        <line x1="20" y1="28" x2="28" y2="20" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="52" y1="20" x2="60" y2="28" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round"/>
+                        <!-- Sword pommels -->
+                        <circle cx="22" cy="22" r="2.5" fill="#B22222"/>
+                        <circle cx="58" cy="22" r="2.5" fill="#B22222"/>
+                        <!-- Small rose at center -->
+                        <circle cx="40" cy="46" r="6" fill="#B22222"/>
+                        <circle cx="40" cy="46" r="3" fill="#8B0000"/>
+                        <!-- Tiny fleur-de-lis at top -->
+                        <path d="M40 12 Q42 16 40 20 Q38 16 40 12Z" fill="#1A1A1A" opacity="0.3"/>
+                        <path d="M36 15 Q38 14 40 16 Q38 18 36 15Z" fill="#1A1A1A" opacity="0.3"/>
+                        <path d="M44 15 Q42 14 40 16 Q42 18 44 15Z" fill="#1A1A1A" opacity="0.3"/>
+                    </svg>
+                </div>
+                <span class="knight-name">Ghofrane</span>
+            </button>
+            <button class="knight-btn" onclick="selectKnight('Katherine')">
+                <div class="knight-shield">
+                    <svg viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Shield -->
+                        <path d="M40 4 L74 16 L74 52 Q74 82 40 92 Q6 82 6 52 L6 16 Z" fill="#FFF0F6" stroke="#1A1A1A" stroke-width="2"/>
+                        <!-- Chevron band -->
+                        <path d="M6 40 L40 56 L74 40 L74 48 L40 64 L6 48 Z" fill="#B22222" opacity="0.15"/>
+                        <!-- Crossed swords -->
+                        <line x1="24" y1="24" x2="56" y2="68" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="56" y1="24" x2="24" y2="68" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+                        <!-- Sword guards -->
+                        <line x1="20" y1="28" x2="28" y2="20" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="52" y1="20" x2="60" y2="28" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round"/>
+                        <!-- Sword pommels -->
+                        <circle cx="22" cy="22" r="2.5" fill="#B22222"/>
+                        <circle cx="58" cy="22" r="2.5" fill="#B22222"/>
+                        <!-- Small rose at center -->
+                        <circle cx="40" cy="46" r="6" fill="#B22222"/>
+                        <circle cx="40" cy="46" r="3" fill="#8B0000"/>
+                        <!-- Tiny fleur-de-lis at top -->
+                        <path d="M40 12 Q42 16 40 20 Q38 16 40 12Z" fill="#1A1A1A" opacity="0.3"/>
+                        <path d="M36 15 Q38 14 40 16 Q38 18 36 15Z" fill="#1A1A1A" opacity="0.3"/>
+                        <path d="M44 15 Q42 14 40 16 Q42 18 44 15Z" fill="#1A1A1A" opacity="0.3"/>
+                    </svg>
+                </div>
+                <span class="knight-name">Katherine</span>
+            </button>
+        </div>
+        </div><!-- /name-form-content -->
+    </div>
+</div>
+
+<!-- Victory Overlay -->
+<div class="victory-overlay" id="victoryOverlay">
+    <div class="victory-content">
+        <div class="victory-crest">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Crown -->
+                <path d="M25 45 L30 20 L40 35 L50 15 L60 35 L70 20 L75 45 Z" fill="#B22222" stroke="#8B0000" stroke-width="1.5"/>
+                <rect x="25" y="45" width="50" height="8" rx="2" fill="#8B0000"/>
+                <!-- Jewels -->
+                <circle cx="50" cy="35" r="3" fill="#E8A0BF"/>
+                <circle cx="37" cy="38" r="2" fill="#E8A0BF"/>
+                <circle cx="63" cy="38" r="2" fill="#E8A0BF"/>
+                <!-- Laurel wreath below -->
+                <path d="M30 58 Q35 65 40 70 Q45 75 50 78" fill="none" stroke="#556B2F" stroke-width="2" stroke-linecap="round"/>
+                <path d="M70 58 Q65 65 60 70 Q55 75 50 78" fill="none" stroke="#556B2F" stroke-width="2" stroke-linecap="round"/>
+                <!-- Leaves -->
+                <ellipse cx="33" cy="62" rx="4" ry="2" fill="#556B2F" transform="rotate(-30 33 62)"/>
+                <ellipse cx="38" cy="67" rx="4" ry="2" fill="#556B2F" transform="rotate(-20 38 67)"/>
+                <ellipse cx="44" cy="73" rx="4" ry="2" fill="#556B2F" transform="rotate(-10 44 73)"/>
+                <ellipse cx="67" cy="62" rx="4" ry="2" fill="#556B2F" transform="rotate(30 67 62)"/>
+                <ellipse cx="62" cy="67" rx="4" ry="2" fill="#556B2F" transform="rotate(20 62 67)"/>
+                <ellipse cx="56" cy="73" rx="4" ry="2" fill="#556B2F" transform="rotate(10 56 73)"/>
+                <!-- Rose at bottom -->
+                <circle cx="50" cy="82" r="5" fill="#B22222"/>
+                <circle cx="50" cy="82" r="2.5" fill="#8B0000"/>
+            </svg>
+        </div>
+        <h1>BINGO</h1>
+        <p id="victoryMsg"></p>
+        <button onclick="closeVictory()">Contemplar Hazaña</button>
+    </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-crest">
+        <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+            <!-- Shield -->
+            <path d="M50 5 L90 20 L90 65 Q90 100 50 115 Q10 100 10 65 L10 20 Z" fill="none" stroke="#1A1A1A" stroke-width="2.5"/>
+            <path d="M50 12 L83 24 L83 63 Q83 94 50 108 Q17 94 17 63 L17 24 Z" fill="var(--pink-pale)" stroke="none"/>
+            <!-- Vertical band -->
+            <rect x="44" y="18" width="12" height="88" fill="#B22222" opacity="0.12" rx="1"/>
+            <!-- Rose -->
+            <ellipse cx="50" cy="48" rx="14" ry="16" fill="#B22222"/>
+            <ellipse cx="42" cy="51" rx="11" ry="13" fill="#CC3333" transform="rotate(-15 42 51)"/>
+            <ellipse cx="58" cy="51" rx="11" ry="13" fill="#CC3333" transform="rotate(15 58 51)"/>
+            <ellipse cx="50" cy="54" rx="10" ry="12" fill="#8B0000"/>
+            <ellipse cx="45" cy="44" rx="8" ry="10" fill="#DD4444" transform="rotate(-25 45 44)"/>
+            <ellipse cx="55" cy="44" rx="8" ry="10" fill="#DD4444" transform="rotate(25 55 44)"/>
+            <circle cx="50" cy="48" r="5" fill="#EE5555"/>
+            <circle cx="50" cy="48" r="2" fill="#8B0000"/>
+            <!-- Stem -->
+            <line x1="50" y1="64" x2="50" y2="88" stroke="#556B2F" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M50 72 Q40 68 37 74" fill="none" stroke="#556B2F" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M50 78 Q60 74 63 80" fill="none" stroke="#556B2F" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- Leaves -->
+            <ellipse cx="37" cy="74" rx="5" ry="2.5" fill="#556B2F" transform="rotate(-25 37 74)"/>
+            <ellipse cx="63" cy="80" rx="5" ry="2.5" fill="#556B2F" transform="rotate(25 63 80)"/>
+        </svg>
+    </div>
+    <div class="title">Caballeros del Carrete</div>
+    <div class="subtitle">Photowalk de Sant Jordi</div>
+    <div class="player-info">
+        <span class="player-name" id="playerLabel">Caballero</span>
+        <span class="score-badge" id="scoreLabel">0 / 25</span>
+    </div>
+</div>
+
+<!-- Gothic divider -->
+<div class="divider">
+    <svg viewBox="0 0 320 24" xmlns="http://www.w3.org/2000/svg">
+        <!-- Lines -->
+        <line x1="0" y1="12" x2="120" y2="12" stroke="#1A1A1A" stroke-width="0.5" opacity="0.2"/>
+        <line x1="200" y1="12" x2="320" y2="12" stroke="#1A1A1A" stroke-width="0.5" opacity="0.2"/>
+        <!-- Fleur de lis center -->
+        <g transform="translate(160,12) scale(0.5)" opacity="0.25">
+            <path d="M0 -20 Q4 -10 0 0 Q-4 -10 0 -20Z" fill="#1A1A1A"/>
+            <path d="M0 0 Q4 10 0 20 Q-4 10 0 0Z" fill="#1A1A1A"/>
+            <path d="M-12 -10 Q-6 -12 0 -6 Q-6 0 -12 -10Z" fill="#1A1A1A"/>
+            <path d="M12 -10 Q6 -12 0 -6 Q6 0 12 -10Z" fill="#1A1A1A"/>
+            <path d="M-12 10 Q-6 12 0 6 Q-6 0 -12 10Z" fill="#1A1A1A"/>
+            <path d="M12 10 Q6 12 0 6 Q6 0 12 10Z" fill="#1A1A1A"/>
+            <circle cx="0" cy="0" r="3" fill="#1A1A1A"/>
+        </g>
+        <!-- Small diamonds -->
+        <path d="M130 12 L135 9 L140 12 L135 15 Z" fill="#1A1A1A" opacity="0.15"/>
+        <path d="M180 12 L185 9 L190 12 L185 15 Z" fill="#1A1A1A" opacity="0.15"/>
+        <!-- Trefoil left -->
+        <g transform="translate(115,12) scale(0.3)" opacity="0.15">
+            <circle cx="0" cy="-6" r="5" fill="#1A1A1A"/>
+            <circle cx="-5" cy="3" r="5" fill="#1A1A1A"/>
+            <circle cx="5" cy="3" r="5" fill="#1A1A1A"/>
+        </g>
+        <!-- Trefoil right -->
+        <g transform="translate(205,12) scale(0.3)" opacity="0.15">
+            <circle cx="0" cy="-6" r="5" fill="#1A1A1A"/>
+            <circle cx="-5" cy="3" r="5" fill="#1A1A1A"/>
+            <circle cx="5" cy="3" r="5" fill="#1A1A1A"/>
+        </g>
+    </svg>
+</div>
+
+<!-- Bingo Grid -->
+<div class="bingo-container">
+    <div class="grid-frame">
+        <!-- Corner ornaments -->
+        <div class="frame-corner frame-corner-tl">
+            <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 0 L30 0 L30 4 L4 4 L4 30 L0 30 Z" fill="#1A1A1A"/>
+                <path d="M8 8 Q8 4 12 4" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+                <circle cx="14" cy="4" r="1.5" fill="#B22222"/>
+                <circle cx="4" cy="14" r="1.5" fill="#B22222"/>
+            </svg>
+        </div>
+        <div class="frame-corner frame-corner-tr">
+            <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 0 L30 0 L30 4 L4 4 L4 30 L0 30 Z" fill="#1A1A1A"/>
+                <path d="M8 8 Q8 4 12 4" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+                <circle cx="14" cy="4" r="1.5" fill="#B22222"/>
+                <circle cx="4" cy="14" r="1.5" fill="#B22222"/>
+            </svg>
+        </div>
+        <div class="frame-corner frame-corner-bl">
+            <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 0 L30 0 L30 4 L4 4 L4 30 L0 30 Z" fill="#1A1A1A"/>
+                <path d="M8 8 Q8 4 12 4" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+                <circle cx="14" cy="4" r="1.5" fill="#B22222"/>
+                <circle cx="4" cy="14" r="1.5" fill="#B22222"/>
+            </svg>
+        </div>
+        <div class="frame-corner frame-corner-br">
+            <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 0 L30 0 L30 4 L4 4 L4 30 L0 30 Z" fill="#1A1A1A"/>
+                <path d="M8 8 Q8 4 12 4" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+                <circle cx="14" cy="4" r="1.5" fill="#B22222"/>
+                <circle cx="4" cy="14" r="1.5" fill="#B22222"/>
+            </svg>
+        </div>
+        <div class="bingo-grid" id="bingoGrid"></div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="actions">
+    <button class="btn btn-shuffle" onclick="changeKnight()">Cambiar caballera</button>
+    <button class="btn btn-reset" onclick="resetBoard()">Reiniciar</button>
+</div>
+
+<!-- Footer ornament - fleur de lis -->
+<div class="footer-ornament">
+    <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <!-- Fleur de lis -->
+        <path d="M30 5 Q34 15 30 28 Q26 15 30 5Z" fill="#1A1A1A"/>
+        <path d="M30 28 Q34 38 30 52 Q26 38 30 28Z" fill="#1A1A1A"/>
+        <path d="M14 14 Q22 12 30 22 Q22 28 14 14Z" fill="#1A1A1A"/>
+        <path d="M46 14 Q38 12 30 22 Q38 28 46 14Z" fill="#1A1A1A"/>
+        <path d="M14 42 Q22 44 30 34 Q22 28 14 42Z" fill="#1A1A1A"/>
+        <path d="M46 42 Q38 44 30 34 Q38 28 46 42Z" fill="#1A1A1A"/>
+        <circle cx="30" cy="28" r="4" fill="#1A1A1A"/>
+    </svg>
+</div>
+
+<script>
+const ALL_PROMPTS = [
+    "Una rosa roja",
+    "Un libro abierto",
+    "Un dragon",
+    "Alguien leyendo",
+    "El momento exacto en que una rosa cambia de manos",
+    "Calle convertida en libreria sin plan de salida",
+    "Muestra publica de afecto bloqueando el paso de peatones",
+    "Interaccion vendedor-comprador (sin caras)",
+    "Autor firmando con cara de concentracion",
+    "Una espada (real o de palo)",
+    "Alguien disfrazado de epoca",
+    "Una parada de libros",
+    "Una puerta que parezca de castillo",
+    "Un musico callejero",
+    "Una fuente o pozo",
+    "Alguien haciendo una foto (fotoception)",
+    "Algo de color dorado",
+    "Una escalera de piedra",
+    "Un mosaico o trencadis al estilo Gaudi",
+    "Un edificio gotico o medieval",
+    "Alguien con sombrero",
+    "Una bandera o estandarte",
+    "Un balcon con plantas que parezca de cuento",
+    "Un dulce o pastel bonito"
+];
+
+let playerName = '';
+let grid = [];
+let completed = new Set();
+let won = false;
+
+function seededRandom(seed) {
+    let s = 0;
+    for (let i = 0; i < seed.length; i++) s = ((s << 5) - s + seed.charCodeAt(i)) | 0;
+    return function() {
+        s = (s * 16807 + 0) % 2147483647;
+        return (s & 0x7fffffff) / 2147483647;
+    };
+}
+
+function shuffle(arr, seed) {
+    const a = [...arr];
+    const rng = seed ? seededRandom(seed) : Math.random;
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor((typeof rng === 'function' ? rng() : Math.random()) * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function getStorageKey() {
+    return 'bingo_sj_' + playerName.toLowerCase().trim();
+}
+
+function saveState() {
+    const data = { grid, completed: [...completed], won };
+    localStorage.setItem(getStorageKey(), JSON.stringify(data));
+}
+
+function loadState() {
+    const raw = localStorage.getItem(getStorageKey());
+    if (!raw) return false;
+    try {
+        const data = JSON.parse(raw);
+        grid = data.grid;
+        completed = new Set(data.completed);
+        won = data.won || false;
+        return true;
+    } catch { return false; }
+}
+
+function buildGrid() {
+    const shuffled = shuffle(ALL_PROMPTS, playerName);
+    grid = [];
+    let pi = 0;
+    for (let i = 0; i < 25; i++) {
+        if (i === 12) {
+            grid.push({ text: 'GRATIS', free: true });
+        } else {
+            grid.push({ text: shuffled[pi++], free: false });
+        }
+    }
+    completed = new Set([12]);
+    won = false;
+}
+
+function renderGrid() {
+    const container = document.getElementById('bingoGrid');
+    container.innerHTML = '';
+    grid.forEach((cell, idx) => {
+        const div = document.createElement('div');
+        div.className = 'cell';
+        if (cell.free) div.classList.add('free', 'completed');
+        else if (completed.has(idx)) div.classList.add('completed');
+        div.innerHTML = `<span>${cell.text}</span>`;
+        if (!cell.free) {
+            div.addEventListener('click', () => toggleCell(idx));
+        }
+        container.appendChild(div);
+    });
+    updateScore();
+    if (won) highlightWin();
+}
+
+function toggleCell(idx) {
+    if (won) return;
+    if (completed.has(idx)) {
+        completed.delete(idx);
+    } else {
+        completed.add(idx);
+    }
+    saveState();
+    renderGrid();
+    checkBingo();
+}
+
+function updateScore() {
+    document.getElementById('scoreLabel').textContent = `${completed.size} / 25`;
+}
+
+function checkBingo() {
+    const lines = [];
+    for (let r = 0; r < 5; r++) lines.push([0,1,2,3,4].map(c => r*5 + c));
+    for (let c = 0; c < 5; c++) lines.push([0,1,2,3,4].map(r => r*5 + c));
+    lines.push([0,6,12,18,24]);
+    lines.push([4,8,12,16,20]);
+
+    for (const line of lines) {
+        if (line.every(i => completed.has(i))) {
+            won = true;
+            saveState();
+            highlightWin(line);
+            showVictory();
+            return;
+        }
+    }
+}
+
+function highlightWin(line) {
+    if (!line && won) {
+        const lines = [];
+        for (let r = 0; r < 5; r++) lines.push([0,1,2,3,4].map(c => r*5+c));
+        for (let c = 0; c < 5; c++) lines.push([0,1,2,3,4].map(r => r*5+c));
+        lines.push([0,6,12,18,24]);
+        lines.push([4,8,12,16,20]);
+        for (const l of lines) {
+            if (l.every(i => completed.has(i))) { line = l; break; }
+        }
+    }
+    if (!line) return;
+    const cells = document.querySelectorAll('.cell');
+    line.forEach(i => cells[i].classList.add('winning'));
+}
+
+function showVictory() {
+    document.getElementById('victoryMsg').textContent =
+        `Noble ${playerName}, habeis completado la gesta!`;
+    document.getElementById('victoryOverlay').classList.add('show');
+    spawnConfetti();
+}
+
+function closeVictory() {
+    document.getElementById('victoryOverlay').classList.remove('show');
+}
+
+function spawnConfetti() {
+    // SVG confetti pieces instead of emojis
+    const colors = ['#B22222', '#CC3333', '#8B0000', '#E8A0BF', '#556B2F', '#C4A35A', '#1A1A1A'];
+    const shapes = ['rose', 'fleur', 'diamond', 'trefoil'];
+    for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+            const el = document.createElement('div');
+            el.className = 'confetti';
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            const size = 14 + Math.random() * 14;
+            let svgContent;
+            switch(shape) {
+                case 'rose':
+                    svgContent = `<svg width="${size}" height="${size}" viewBox="0 0 20 20"><ellipse cx="10" cy="8" rx="5" ry="6" fill="${color}"/><ellipse cx="10" cy="10" rx="4" ry="5" fill="${color}" opacity="0.7"/><line x1="10" y1="14" x2="10" y2="20" stroke="#556B2F" stroke-width="1.5"/></svg>`;
+                    break;
+                case 'fleur':
+                    svgContent = `<svg width="${size}" height="${size}" viewBox="0 0 20 20"><path d="M10 2Q12 6 10 10Q8 6 10 2Z" fill="${color}"/><path d="M4 6Q8 5 10 10Q6 12 4 6Z" fill="${color}"/><path d="M16 6Q12 5 10 10Q14 12 16 6Z" fill="${color}"/><circle cx="10" cy="10" r="2" fill="${color}"/></svg>`;
+                    break;
+                case 'diamond':
+                    svgContent = `<svg width="${size}" height="${size}" viewBox="0 0 20 20"><path d="M10 2L18 10L10 18L2 10Z" fill="${color}"/></svg>`;
+                    break;
+                case 'trefoil':
+                    svgContent = `<svg width="${size}" height="${size}" viewBox="0 0 20 20"><circle cx="10" cy="5" r="4" fill="${color}"/><circle cx="5" cy="13" r="4" fill="${color}"/><circle cx="15" cy="13" r="4" fill="${color}"/></svg>`;
+                    break;
+            }
+            el.innerHTML = svgContent;
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (2.5 + Math.random() * 3) + 's';
+            document.body.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+        }, i * 60);
+    }
+}
+
+function selectKnight(name) {
+    playerName = name;
+    document.getElementById('playerLabel').textContent = playerName;
+    document.getElementById('nameModal').classList.remove('show');
+
+    if (!loadState()) {
+        buildGrid();
+        saveState();
+    }
+    renderGrid();
+}
+
+function resetBoard() {
+    if (!confirm('Seguro que quieres empezar de cero?')) return;
+    buildGrid();
+    saveState();
+    renderGrid();
+}
+
+function changeKnight() {
+    document.getElementById('nameModal').classList.add('show');
+}
+</script>
+</body>
+</html>
